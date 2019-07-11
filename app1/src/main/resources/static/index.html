@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>SSO 1</title>
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width" />
+<base href="/" />
+<!-- <link rel="stylesheet" type="text/css"  href="/webjars/bootstrap/css/bootstrap.min.css" /> -->
+    <!-- Bootstrap 4 CSS. This is for the alpha 3 release of Bootstrap 4. This should be updated when Bootstrap 4 is officially released. -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.3/css/bootstrap.min.css" integrity="sha384-MIwDKRSSImVFAZCVLtU0LMDdON6KVCrZHyVQQj6e8wIEJkW4tvwqXrbMIya1vriY" crossorigin="anonymous">
+      
+    <!-- Custom CSS: You can use this stylesheet to override any Bootstrap styles and/or apply your own styles -->
+    <link href="css/custom.css" rel="stylesheet">
+    
+    <!-- For icons -->
+    <link href="css/font-awesome-4.6.3/css/font-awesome.min.css" rel="stylesheet">
+    
+    <link href="css/custom.css" rel="stylesheet">
+    
+<script type="text/javascript" src="/webjars/jquery/jquery.min.js"></script>
+<script type="text/javascript"  src="/webjars/bootstrap/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <nav id="topNav" class="navbar navbar-full fixed-top navbar-dark bg-inverse m-b-1">
+    		<span class="navbar-brand"><i class="fa fa-paper-plane"></i></span><span class="navbar-brand">SSO1</span>
+    		<div class="navbar-brand pull-right authenticated" style="display: none">Logged in as: <strong><span id="username"></span></strong>&nbsp;<span><button onClick="logout()" class="btn btn-secondary">Logout</button></span>
+    		</div>
+    </nav>
+    
+<div class="container-fluid">
+		<!-- Left Column -->
+		<div class="col-sm-3">
+		</div>
+		<!-- Center Column -->
+		<div class="col-sm-6">
+			<div class="container bg-info">
+				<h2 align="center" class="text-white custom-title">SSO Client 1</h2>
+			</div>
+			<p>
+			Welcome to the <strong>Eclipse SSO Demo</strong>.
+			</p>
+		    
+		    <div class="container unauthenticated">
+    			<div class="card">
+				<div class="card-header p-b-0">
+					<h5 class="card-title">
+						<i class="fa fa-sign-in" aria-hidden="true"></i> 
+						Log In
+					</h5>
+				</div>
+				<div class="card-block">
+        			  <a href="/login" class="btn btn-outline-success">Login with Eclipse</a>
+				</div>
+			</div>
+    			</div>
+    			<div class="container authenticated" style="display: none">
+    			<div class="card">
+				<div class="card-header p-b-0">
+					<h5 class="card-title">
+						<i class="fa fa-user" aria-hidden="true"></i> 
+						User Details
+					</h5>
+				</div>
+				
+				<div class="card-block">
+			        <p>
+			                Hello <strong><span id="user"></span></strong>
+			        </p>
+			        <table class="table">
+			          <tbody>
+			            <tr>
+			              <td>Team</td>
+			              <td class="bg-info"><span id="teamName"></span></td>
+			              <td>Region</td>
+			              <td class="bg-info"><span id="region"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Profile</td>
+			              <td class="bg-info" colspan="3"><span id="profile"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Authorities</td>
+			              <td class="bg-info" colspan="3"><span id="authorities"></span></td>
+			            </tr>
+			          </tbody>
+			        </table>
+			        <div class="alert alert-warning">
+			               <a href="https://olm-custombuild-ecl.olmeservices.co.uk/eclipse" class="btn btn-outline-primary" target="_blank">Launch Eclipse (Alpha)</a>
+			               <a href="http://localhost:8080/eclipse" class="btn btn-outline-secondary" target="_blank">Launch Eclipse (Local)</a>
+			               <a href="http://localhost:8082/login" class="btn btn-outline-success" target="_blank">Launch SSO2</a>
+			               <p>
+			               Please be aware, the <strong>Eclipse (Local)</strong> and <strong>SSO2</strong> buttons require these apps to be running locally.
+			               </p>
+			        </div>
+				</div>
+			</div>
+
+    			<div class="card">
+				<div class="card-header p-b-0">
+					<h5 class="card-title">
+						<i class="fa fa-key" aria-hidden="true"></i> 
+						Token Details
+					</h5>
+				</div>
+				<div class="card-block">
+			        <table class="table">
+			          <tbody>
+			            <tr>
+			              <td>Expiry</td>
+			              <td class="bg-info" colspan="2"><span id="tokenExpiry"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Scopes</td>
+			              <td class="bg-info" colspan="2"><span id="tokenScopes"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Token Id</td>
+			              <td class="bg-info" colspan="2"><span id="tokenId"></span></td>
+			            </tr>
+			          </tbody>
+			        </table>
+			        <div class="alert alert-warning">
+			            <button onClick="revokeToken()" class="btn btn-outline-secondary">Revoke token</button>
+			            <button onClick="refresh()" class="btn btn-outline-danger">Refresh</button>
+			            These operations do not currently work and require more development.
+			        </div>
+				</div>
+			</div>
+
+    			<div class="card">
+				<div class="card-header p-b-0">
+					<h5 class="card-title">
+						<i class="fa fa-search" aria-hidden="true"></i> 
+						Eclipse Person Search
+					</h5>
+				</div>
+				<div class="card-block">
+					<div class="input-group mb-3 input-prepend-append">
+					  <div class="input-group-prepend">
+					    <span class="input-group-text" id="inputGroup-sizing-default">Search</span>
+					  </div>
+			            <input type="text" class="form-control" id="personSearch" placeholder="Enter search term" /> 
+					  <div class="input-group-append">
+			            <button onClick="getPersons()" class="btn btn-outline-primary">Search</button>
+  					 </div>
+  					 <br/>
+			          <table id="personsTable" class="table table-striped table-hover">
+			            <caption>Person details from Eclipse.</caption>
+			            <thead class="thead-light">
+			              <tr>
+			                <th scope="col">Identifier</th>
+			                <th scope="col">Name</th>
+			                <th scope="col">Age</th>
+			              </tr>
+			            </thead>
+			            <tbody><tr><td colspan=3>No results</td></tr></tbody>
+			          </table>
+			</div>
+		  	</div>
+		</div>
+			  <!-- Right Column -->
+	  <div class="col-sm-3">
+	  </div>
+</div>
+
+    <script type="text/javascript" src="/webjars/js-cookie/js.cookie.js"></script>
+    <script type="text/javascript">
+          $
+              .ajaxSetup({
+                beforeSend : function(xhr, settings) {
+                  if (settings.type == 'POST' || settings.type == 'PUT'
+                      || settings.type == 'DELETE') {
+                    if (!(/^http:.*/.test(settings.url) || /^https:.*/
+                        .test(settings.url))) {
+                      // Only send the token to relative URLs i.e. locally.
+                      xhr.setRequestHeader("X-XSRF-TOKEN",
+                          Cookies.get('XSRF-TOKEN'));
+                    }
+                  }
+                }
+              });
+          var clearUserDetails = function() {
+         	  $("#user").html("");
+         	  $("#username").html("");
+              $("#authorities").html("");
+              $("#teamName").html("");
+              $("#region").html("");
+              $("#profile").html("");
+              $("#tokenExpiry").html("");
+              $("#tokenScopes").html("");
+              $("#tokenId").html("");
+          }
+           var getUser = function() {
+        	     clearUserDetails();
+              $.get("/user", function(data) {
+              $("#user").html(data.subjectName);
+              $("#username").html(data.username);
+              var authorities = [];
+              $.each(data.authorities, function(index,value) {
+            	    authorities.push(value.authority);
+              });
+              $("#authorities").html(authorities.join(', '));
+              $("#teamName").html(data.teamName);
+              $("#region").html(data.teamRegionName);
+              $("#profile").html(data.profileName);
+              var expiryDate = new Date(data.expiration);
+              $("#tokenExpiry").html( expiryDate.toLocaleDateString() + " " + expiryDate.toLocaleTimeString());
+              $("#tokenScopes").html(data.scopes.join(', '));
+              $("#tokenId").html(data.jti);
+              $("#tokenId").data("bearer", data.token);
+              console.log("Refresh token = " + data.refreshToken)
+              if (data.refreshToken !== "NO_REFRESH_TOKEN") {
+                  $("#tokenId").data("refresh", data.refreshToken);
+              }
+              $(".unauthenticated").hide();
+              $(".authenticated").show();
+            });
+            return true;
+          }
+          getUser();
+          var revokeToken = function() {
+        	    var token = $("#token").data("bearer");
+        	    console.log('Revoking token ' + token);
+        	    $.ajax({
+        	    	  url: "/revoke",
+        	    	  type:'DELETE',
+        	    	  success: function(result) {
+        	    		  console.log('Token revoked.');
+        	    	  },
+        	    	  error: function(result) {
+        	    		  console.log('Failed to revoke token.');
+        	    	  }
+        	    })
+          }
+          var revokeTokenEclipse_NotWorking = function() {
+      	    var token = $("#token").data("bearer");
+      	    console.log('Revoking token ' + token);
+      	    $.ajax({
+      	    	  url: "http://localhost:8080/eclipse/oauth/token",
+      	    	  type:'DELETE',
+      	    	  headers: {
+      	    		  "Authorization":"Bearer " + token
+      	    	  },
+      	    	   xhrFields: {
+      	    		     withCredentials: true
+      	    	   },
+      	      crossDomain: true,
+      	    	  success: function(result) {
+      	    		  console.log('Token revoked.');
+      	    	  },
+      	    	  error: function(result) {
+      	    		  console.log('Failed to revoke token.');
+      	    	  }
+      	    })
+        }
+          var getPersons = function() {
+        	  	  var searchTerm = $("#personSearch").val();
+     		  $("#personsTable tbody").empty();
+          	  $.get("/person/"+searchTerm, function(data) {
+          		  if (data && data.length > 0) {
+	          		  data.forEach(function(value) {
+	          			let age;
+	          			if (value.age < 0) {
+	          				age = "Unknown";
+	          			} else {
+	          				age = value.age;
+	          			}
+	          			$("#personsTable tbody").append("<tr><td>"+value.identifier+"</td><td>"+value.name+"</td><td>"+age+"</td></tr>");
+	          		  });
+          		  }
+          	  }).fail(function() {
+          		$("#personsTable tbody").append("<tr><td colspan=3>Failed to retrieve person data.</td></tr>");
+          	  });
+          }
+          var logout = function() {
+              $.post("/logout", function() {
+                $("#user").html('');
+                $(".unauthenticated").show();
+                $(".authenticated").hide();
+              });
+              return true;
+            }
+          var refresh = function() {
+        	   $.ajax({
+        			url:"/refresh",
+        	        type: 'PUT',
+        	        success: function(result) {
+        		       getUser();
+        	        }
+        	   });
+        	   return true;
+          }
+        </script>
+</body>
+</html>

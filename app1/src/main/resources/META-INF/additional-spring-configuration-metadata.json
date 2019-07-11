@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "resource.eclipse.url",
+  "type": "java.lang.String",
+  "description": "Eclipse resource server URL."
+}]}
