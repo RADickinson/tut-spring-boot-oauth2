@@ -4,7 +4,8 @@ server:
       session:
         cookie:
           name: APP1SESSION
-        
+
+# Alpha (custom) server configuration
 security:
   oauth2:
     client:

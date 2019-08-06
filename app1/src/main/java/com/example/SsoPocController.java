@@ -18,9 +18,11 @@ package com.example;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -31,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.jwt.Jwt;
+import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
@@ -74,6 +78,8 @@ class SsoPocController{
 	  OAuth2RefreshToken refreshToken = clientContext.getAccessToken().getRefreshToken();
 	  String refreshTokenValue = refreshToken != null ? refreshToken.getValue() : "NO_REFRESH_TOKEN";
 	  userInfo.put("refreshToken", refreshTokenValue);
+	  Jwt jwt =JwtHelper.decode(clientContext.getAccessToken().getValue());
+	  logger.info("Access token as Jwt: {}",jwt);
 	  oauthRestOps.getAccessToken();
 		return userInfo; 
 	}
@@ -132,4 +138,28 @@ class SsoPocController{
 
     return eclipsePersons;
   }
+  
+  @RequestMapping(path="/permissions", method=RequestMethod.GET)
+  @ResponseBody
+  public List<Permission> permissions() {
+    List<?> permissionsFromEclipse = oauthRestOps.getForEntity(eclipseUrl+"/rest/oauth/aggregatedPermission", List.class).getBody();
+    logger.info("Response class: {}, Permissions from Eclipse: {}",permissionsFromEclipse.getClass().getSimpleName(), permissionsFromEclipse);
+ 
+    List<Permission> eclipsePermissions = new ArrayList<>();
+
+    permissionsFromEclipse.forEach(p -> {
+      @SuppressWarnings("unchecked")
+      Map<String, ?> map = (Map<String, ?>)p;
+      String domain = (String)map.get("domain");
+      List<?> permissions = (List<?>)map.get("permissions");
+      List<String> perms = permissions.stream()
+          .map(perm -> (String)perm)
+          .collect(Collectors.toList());
+      Permission permission = new Permission(domain, perms);
+      eclipsePermissions.add(permission);
+    });
+    eclipsePermissions.sort(Comparator.comparing(Permission::getDomain));
+    return eclipsePermissions;
+  }
+  
 }
