@@ -35,13 +35,19 @@
 		</div>
 		<!-- Center Column -->
 		<div class="col-sm-6">
-			<div class="container bg-success">
+			<div class="container bg-primary">
 				<h2 align="center" class="text-white custom-title">SSO Client 2</h2>
 			</div>
-			<p>
-			Welcome to the <strong>Eclipse SSO Demo</strong>.
-			</p>
-		    
+			<div class="unauthenticated">
+				<p>
+				Welcome to the <strong>Eclipse OAuth SSO Demo</strong>.
+				</p>
+		    </div>
+			<div class="authenticated" style="display: none">
+		        <p>
+		        Hello <strong><span id="user"></span></strong>, this is the <strong>Eclipse OAuth SSO Demo</strong>.
+		        </p>
+		    </div>
 		    <div class="container unauthenticated">
     			<div class="card">
 				<div class="card-header p-b-0">
@@ -65,59 +71,94 @@
 				</div>
 				
 				<div class="card-block">
-			        <p>
-			                Hello <strong><span id="user"></span></strong>
-			        </p>
+					<p>
+					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint using the OAuth access token.
+					</p>
 			        <table class="table">
 			          <tbody>
 			            <tr>
-			              <td>Team</td>
-			              <td class="bg-success"><span id="teamName"></span></td>
-			              <td>Region</td>
-			              <td class="bg-success"><span id="region"></span></td>
+			              <td>Person name</td>
+			              <td class="bg-primary"><span id="personName"></span></td>
+			              <td>Person Id</td>
+			              <td class="bg-primary"><span id="personId"></span></td>
 			            </tr>
 			            <tr>
 			              <td>Profile</td>
-			              <td class="bg-success" colspan="3"><span id="profile"></span></td>
+			              <td class="bg-primary" colspan="3"><span id="profile"></span></td>
 			            </tr>
 			            <tr>
-			              <td>Authorities</td>
-			              <td class="bg-success" colspan="3"><span id="authorities"></span></td>
+			              <td>User Id</td>
+			              <td class="bg-primary"><span id="userId"></span></td>
+			              <td>Profile Id</td>
+			              <td class="bg-primary"><span id="profileId"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Mobile</td>
+			              <td class="bg-primary" colspan="3"><span id="mobile"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Email</td>
+			              <td class="bg-primary" colspan="3"><span id="email"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Role</td>
+			              <td class="bg-primary" colspan="3"><span id="role"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Team name</td>
+			              <td class="bg-primary"><span id="teamName"></span></td>
+			              <td>Team Id</td>
+			              <td class="bg-primary"><span id="teamId"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Team region</td>
+			              <td class="bg-primary"><span id="region"></span></td>
+			              <td>Region code</td>
+			              <td class="bg-primary"><span id="regionCode"></span></td>
 			            </tr>
 			          </tbody>
 			        </table>
-			        <div class="alert alert-warning">
+			        <div>
 			               <a href="https://olm-custombuild-ecl.olmeservices.co.uk/eclipse" class="btn btn-outline-primary" target="_blank">Launch Eclipse (Alpha)</a>
 			               <a href="http://localhost:8080/eclipse" class="btn btn-outline-secondary" target="_blank">Launch Eclipse (Local)</a>
 			               <a href="http://localhost:8081/login" class="btn btn-outline-success" target="_blank">Launch SSO1</a>
-			               <p>
-			               Please be aware, the <strong>Eclipse (Local)</strong> and <strong>SSO1</strong> buttons require these apps to be running locally.
-			               </p>
 			        </div>
+			        <p>
+			          <div class="alert alert-warning">
+			            <strong>NOTE:</strong> Please be aware, the <strong>Eclipse (Local)</strong> and <strong>SSO1</strong> buttons require these apps to be running locally.
+			          </div>
+			        </p>
 				</div>
 			</div>
 
     			<div class="card">
 				<div class="card-header p-b-0">
 					<h5 class="card-title">
-						<i class="fa fa-key" aria-hidden="true"></i> 
+						<i class="fa fa-ticket" aria-hidden="true"></i> 
 						Token Details
 					</h5>
 				</div>
 				<div class="card-block">
+					<p>
+					The details below, plus the user Id, and profile Id are included in the OAuth access token itself.
+					</p>
 			        <table class="table">
 			          <tbody>
 			            <tr>
 			              <td>Expiry</td>
-			              <td class="bg-success" colspan="2"><span id="tokenExpiry"></span></td>
+			              <td class="bg-primary" colspan="2"><span id="tokenExpiry"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Authorities</td>
+			              <td class="bg-primary" colspan="2"><span id="authorities"></span></td>
 			            </tr>
 			            <tr>
 			              <td>Scopes</td>
-			              <td class="bg-success" colspan="2"><span id="tokenScopes"></span></td>
+			              <td class="bg-primary" colspan="2"><span id="tokenScopes"></span></td>
 			            </tr>
 			            <tr>
 			              <td>Token Id</td>
-			              <td class="bg-success" colspan="2"><span id="tokenId"></span></td>
+			              <td class="bg-primary" colspan="2"><span id="tokenId"></span></td>
 			            </tr>
 			          </tbody>
 			        </table>
@@ -186,8 +227,17 @@
          	  $("#username").html("");
               $("#authorities").html("");
               $("#teamName").html("");
+              $("#teamId").html("");
               $("#region").html("");
+              $("#regionCode").html("");
               $("#profile").html("");
+              $("#mobile").html("");
+              $("#email").html("");
+              $("#role").html("");
+              $("#userId").html("");
+              $("#profileId").html("");
+              $("#personName").html("");
+              $("#personId").html("");
               $("#tokenExpiry").html("");
               $("#tokenScopes").html("");
               $("#tokenId").html("");
@@ -195,16 +245,25 @@
            var getUser = function() {
         	     clearUserDetails();
               $.get("/user", function(data) {
-              $("#user").html(data.subjectName);
-              $("#username").html(data.username);
+	              $("#user").html(data.subject_name);
+		          $("#username").html(data.username);
               var authorities = [];
               $.each(data.authorities, function(index,value) {
             	    authorities.push(value.authority);
               });
-              $("#authorities").html(authorities.join(', '));
-              $("#teamName").html(data.teamName);
-              $("#region").html(data.teamRegionName);
-              $("#profile").html(data.profileName);
+           	  $("#authorities").html(authorities.join(', '));
+          	  $("#teamName").html(data.team_name);
+          	  $("#teamId").html(data.team_id);
+          	  $("#region").html(data.team_region_name);
+          	  $("#regionCode").html(data.team_region_code);
+          	  $("#profile").html(data.profile_name);
+          	  $("#email").html(data.email);
+          	  $("#mobile").html(data.phone);
+          	  $("#role").html(data.role_name);
+          	  $("#userId").html(data.user_id);
+          	  $("#profileId").html(data.profile_id);
+          	  $("#personName").html(data.subject_name);
+          	  $("#personId").html(data.subject_id);
               var expiryDate = new Date(data.expiration);
               $("#tokenExpiry").html( expiryDate.toLocaleDateString() + " " + expiryDate.toLocaleTimeString());
               $("#tokenScopes").html(data.scopes.join(', '));

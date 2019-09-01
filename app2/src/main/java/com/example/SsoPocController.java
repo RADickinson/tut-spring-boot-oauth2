@@ -31,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.jwt.Jwt;
+import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
@@ -60,22 +62,39 @@ class SsoPocController{
   
 	@RequestMapping("/user")
 	public Map<String,Object> user(Principal principal) {
-	  logger.info("Principal in SSO APP: {}", principal);
-	  logger.info("Access token is {}", clientContext.getAccessToken().getValue());
-	  logger.info("Additional info {}", clientContext.getAccessToken().getAdditionalInformation());
-	  Map<String, Object> userInfo = new HashMap<>();
-	  userInfo.put("username", principal.getName());
-	  OAuth2Authentication oauth = (OAuth2Authentication) principal;
-	  userInfo.put("authorities", oauth.getAuthorities());
-	  userInfo.putAll(clientContext.getAccessToken().getAdditionalInformation());
-	  userInfo.put("expiration", clientContext.getAccessToken().getExpiration());
-	  userInfo.put("scopes", clientContext.getAccessToken().getScope());
-	  userInfo.put("token", clientContext.getAccessToken().getValue());
-	  OAuth2RefreshToken refreshToken = clientContext.getAccessToken().getRefreshToken();
-	  String refreshTokenValue = refreshToken != null ? refreshToken.getValue() : "NO_REFRESH_TOKEN";
-	  userInfo.put("refreshToken", refreshTokenValue);
-	  oauthRestOps.getAccessToken();
-		return userInfo; 
+    logger.info("Principal in SSO APP: {}", principal);
+
+    // Refresh access token if required.
+   oauthRestOps.getAccessToken();
+
+   logger.info("Access token is {}", clientContext.getAccessToken().getValue());
+   logger.info("Additional info {}", clientContext.getAccessToken().getAdditionalInformation());
+
+   Map<String, Object> userInfo = new HashMap<>();
+   userInfo.putAll(clientContext.getAccessToken().getAdditionalInformation());
+   userInfo.put("username", principal.getName());
+   
+   OAuth2Authentication oauth = (OAuth2Authentication) principal;
+   userInfo.put("authorities", oauth.getAuthorities());
+   
+   Object authDetails = oauth.getUserAuthentication().getDetails();
+   if (Map.class.isAssignableFrom(authDetails.getClass())) {
+     @SuppressWarnings("unchecked")
+     Map<String,?> detailsMap = (Map<String,?>)authDetails;
+     userInfo.putAll(detailsMap);
+   }
+   userInfo.put("expiration", clientContext.getAccessToken().getExpiration());
+   userInfo.put("scopes", clientContext.getAccessToken().getScope());
+   userInfo.put("token", clientContext.getAccessToken().getValue());
+   
+   OAuth2RefreshToken refreshToken = clientContext.getAccessToken().getRefreshToken();
+   String refreshTokenValue = refreshToken != null ? refreshToken.getValue() : "NO_REFRESH_TOKEN";
+   userInfo.put("refreshToken", refreshTokenValue);
+   
+   Jwt jwt =JwtHelper.decode(clientContext.getAccessToken().getValue());
+   logger.info("Access token as Jwt: {}",jwt);
+   
+   return userInfo; 
 	}
 
 	@RequestMapping(path="/refresh", method=RequestMethod.PUT)
