@@ -5,13 +5,15 @@ public class Person {
   private String identifier;
   private String name;
   private int age;
+  private int id;
   
   
-  public Person(String identifier, String name, int age) {
+  public Person(String identifier, String name, int age, int id) {
     super();
     this.identifier = identifier;
     this.name = name;
     this.age = age;
+    this.id = id;
   }
   
   public String getIdentifier() {
@@ -32,9 +34,15 @@ public class Person {
   public void setAge(int age) {
     this.age = age;
   }
+  public int getId() {
+    return id;
+  }
+  public void setId(int id) {
+    this.id = id;
+  }
   
   @Override
   public String toString() {
-    return "Person(identifier="+identifier+",name="+name+",age="+age+")";
+    return "Person(id="+id+",identifier="+identifier+",name="+name+",age="+age+")";
   }
 }

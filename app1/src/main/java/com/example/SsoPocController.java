@@ -19,6 +19,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
 import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -143,15 +145,56 @@ class SsoPocController{
       String identifier = (String)map.get("personIdentifier");
       String name = (String)map.get("name");
       Object ageObj = map.get("age");
+      Object idObj = map.get("id");
+      int id = ((Integer)idObj).intValue();
       int age = 0;
       if (ageObj != null) {
         age = ((Integer)ageObj).intValue();
       }
-      Person eclipsePerson = new Person(identifier, name, age);
+      Person eclipsePerson = new Person(identifier, name, age, id);
       eclipsePersons.add(eclipsePerson);
     });
 
     return eclipsePersons;
+  }
+  @SuppressWarnings("unchecked")
+  @RequestMapping(path="/caseNoteEntry/{personId}", method=RequestMethod.GET)
+  @ResponseBody
+  public CaseNoteEntry caseNoteEntry(@PathVariable(name="personId") Long personId) {
+    logger.info("Eclipse URL is {}", eclipseUrl);
+    logger.info("Person Id is {}", personId);
+
+    MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
+    headers.add("Accept", "application/vnd.olmgroup-usp.casenote.CaseNoteEntryWithVisibility+json");
+    HttpEntity<?> request = new HttpEntity<>(headers);
+
+    JSONObject caseNoteFromEclipse = oauthRestOps.exchange(eclipseUrl+"/rest/person/"+personId+"/caseNoteEntry?pageSize=1", HttpMethod.GET, request, JSONObject.class).getBody();
+    
+//    JSONObject caseNoteFromEclipse = oauthRestOps.getForEntity(eclipseUrl+"/rest/person/"+personId+"/caseNoteEntry?pageSize=1", JSONObject.class).getBody();
+    logger.info("CaseNote from Eclipse: {}", caseNoteFromEclipse);
+
+    List<?> resultsArray = (List<?>) caseNoteFromEclipse.get("results");
+    logger.info("CaseNotes results array: {}", resultsArray);
+    
+    if (CollectionUtils.isEmpty(resultsArray)) {
+      logger.info("No entry found.");
+      return null;
+    }
+    Map<String,?> result = (Map<String,?>)resultsArray.get(0);
+    String entryType = (String)result.get("entryType");
+    String entrySubtype = (String)result.get("entrySubType");
+    String practitioner = (String)result.get("practitioner");
+    String eventDetails = (String)result.get("event");
+    Map<String,?> eventDateMap = (Map<String,?>)result.get("eventDate");
+    logger.info("Event date is {}",eventDateMap);
+    Object calculatedEventDate = eventDateMap.get("calculatedDate");
+    Date eventDate = null;
+    if (calculatedEventDate != null) {
+      eventDate = new Date(Long.valueOf(calculatedEventDate.toString()));
+    }
+    CaseNoteEntry entry =  new CaseNoteEntry(entryType, entrySubtype, practitioner, eventDetails, eventDate);
+    logger.info("Returning case note entry {}",entry);
+    return entry;
   }
   
   @RequestMapping(path="/permissions", method=RequestMethod.GET)

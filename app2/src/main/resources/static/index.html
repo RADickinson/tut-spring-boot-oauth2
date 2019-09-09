@@ -72,7 +72,7 @@
 				
 				<div class="card-block">
 					<p>
-					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint using the OAuth access token.
+					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint invoked using the OAuth access token.
 					</p>
 			        <table class="table">
 			          <tbody>
@@ -85,12 +85,6 @@
 			            <tr>
 			              <td>Profile</td>
 			              <td class="bg-primary" colspan="3"><span id="profile"></span></td>
-			            </tr>
-			            <tr>
-			              <td>User Id</td>
-			              <td class="bg-primary"><span id="userId"></span></td>
-			              <td>Profile Id</td>
-			              <td class="bg-primary"><span id="profileId"></span></td>
 			            </tr>
 			            <tr>
 			              <td>Mobile</td>
@@ -140,13 +134,25 @@
 				</div>
 				<div class="card-block">
 					<p>
-					The details below, plus the user Id, and profile Id are included in the OAuth access token itself.
+					The details below are included in the OAuth access token itself.
 					</p>
 			        <table class="table">
 			          <tbody>
 			            <tr>
 			              <td>Expiry</td>
 			              <td class="bg-primary" colspan="2"><span id="tokenExpiry"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Username</td>
+			              <td class="bg-primary" colspan="2"><span id="username_details"></span></td>
+			            </tr>
+			            <tr>
+			              <td>User Id</td>
+			              <td class="bg-primary" colspan="2"><span id="userId"></span></td>
+			            </tr>
+			            <tr>
+			              <td>Profile Id</td>
+			              <td class="bg-primary" colspan="2"><span id="profileId"></span></td>
 			            </tr>
 			            <tr>
 			              <td>Authorities</td>
@@ -225,6 +231,7 @@
           var clearUserDetails = function() {
          	  $("#user").html("");
          	  $("#username").html("");
+         	  $("#username_details").html("");
               $("#authorities").html("");
               $("#teamName").html("");
               $("#teamId").html("");
@@ -247,6 +254,7 @@
               $.get("/user", function(data) {
 	              $("#user").html(data.subject_name);
 		          $("#username").html(data.username);
+		          $("#username_details").html(data.username);
               var authorities = [];
               $.each(data.authorities, function(index,value) {
             	    authorities.push(value.authority);
