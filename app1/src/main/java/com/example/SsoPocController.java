@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.jwt.Jwt;
 import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
@@ -49,6 +51,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 
 @RestController
 class SsoPocController{
@@ -65,7 +68,7 @@ class SsoPocController{
   OAuth2RestOperations oauthRestOps;
   
 	@RequestMapping("/user")
-	public Map<String,Object> user(Principal principal) {
+	public Map<String,Object> user(Principal principal) throws Exception {
 	  logger.info("Principal in SSO APP: {}", principal);
 
 	   // Refresh access token if required.
@@ -98,6 +101,18 @@ class SsoPocController{
 	  Jwt jwt =JwtHelper.decode(clientContext.getAccessToken().getValue());
 	  logger.info("Access token as Jwt: {}",jwt);
 	  
+	  Jwt refreshJwt = JwtHelper.decode(refreshTokenValue);
+	  logger.info("Refresh token as Jwt: {}",refreshJwt);
+	  
+	  String refreshTokenClaims = refreshJwt.getClaims();
+	  JSONParser parser = new JSONParser(0);
+	  JSONObject refreshTokenClaimsJson = (JSONObject)parser.parse(refreshTokenClaims);
+	  Object refreshTokenExpiryObj = refreshTokenClaimsJson.get("exp");
+	  long refreshTokenExpMs = Long.valueOf(refreshTokenExpiryObj.toString()) * 1000;
+	  Date refreshTokenExpiry = new Date(refreshTokenExpMs);
+	  logger.info("Refresh token expiry: {}", refreshTokenExpiry);
+	  
+	  userInfo.put("refreshTokenExpiry", refreshTokenExpiry);
 	  return userInfo; 
 	}
 
@@ -168,7 +183,16 @@ class SsoPocController{
     headers.add("Accept", "application/vnd.olmgroup-usp.casenote.CaseNoteEntryWithVisibility+json");
     HttpEntity<?> request = new HttpEntity<>(headers);
 
-    JSONObject caseNoteFromEclipse = oauthRestOps.exchange(eclipseUrl+"/rest/person/"+personId+"/caseNoteEntry?pageSize=1", HttpMethod.GET, request, JSONObject.class).getBody();
+    JSONObject caseNoteFromEclipse = null;
+    try {
+      caseNoteFromEclipse = oauthRestOps.exchange(eclipseUrl+"/rest/person/"+personId+"/caseNoteEntry?pageSize=1", HttpMethod.GET, request, JSONObject.class).getBody();
+    } catch (HttpClientErrorException e) {
+      if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode())) {
+        return new CaseNoteEntry("", "", "", "", null, true);
+      } else {
+        throw e;
+      }
+    }
     
 //    JSONObject caseNoteFromEclipse = oauthRestOps.getForEntity(eclipseUrl+"/rest/person/"+personId+"/caseNoteEntry?pageSize=1", JSONObject.class).getBody();
     logger.info("CaseNote from Eclipse: {}", caseNoteFromEclipse);
@@ -192,7 +216,7 @@ class SsoPocController{
     if (calculatedEventDate != null) {
       eventDate = new Date(Long.valueOf(calculatedEventDate.toString()));
     }
-    CaseNoteEntry entry =  new CaseNoteEntry(entryType, entrySubtype, practitioner, eventDetails, eventDate);
+    CaseNoteEntry entry =  new CaseNoteEntry(entryType, entrySubtype, practitioner, eventDetails, eventDate, false);
     logger.info("Returning case note entry {}",entry);
     return entry;
   }

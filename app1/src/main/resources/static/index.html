@@ -72,7 +72,7 @@
 				
 				<div class="card-block">
 					<p>
-					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint invoked using the OAuth access token.
+					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint invoked using the OAuth2 access token.
 					</p>
 			        <table class="table">
 			          <tbody>
@@ -134,7 +134,7 @@
 				</div>
 				<div class="card-block">
 					<p>
-					The details below are included in the OAuth access token itself.
+					The details below are included in the OAuth2 access token itself.
 					</p>
 			        <table class="table">
 			          <tbody>
@@ -166,13 +166,20 @@
 			              <td>Token Id</td>
 			              <td class="bg-info" colspan="2"><span id="tokenId"></span></td>
 			            </tr>
+			            <tr>
+			              <td>Refresh token expiry</td>
+			              <td class="bg-info" colspan="2"><span id="refreshTokenExpiry"></span></td>
+			            </tr>
+			            <tr>
+			              <td><button onClick="refresh()" class="btn btn-outline-primary">Refresh</button></td>
+			              <td colspan="2"><span>Access tokens are only refreshed when they have expired. Using any API (Person search or Case note) will automatically refresh an expired token.</span></td>
+			            </tr>
+			            <tr>
+			              <td class="alert-warning"><button onClick="revokeToken()" class="btn btn-outline-danger">Revoke token</button></td>
+			              <td class="alert-warning" colspan="2"><span>This operation does not currently work and requires more development.</span></td>
+			            </tr>
 			          </tbody>
 			        </table>
-			        <div class="alert alert-warning">
-			            <button onClick="revokeToken()" class="btn btn-outline-secondary">Revoke token</button>
-			            <button onClick="refresh()" class="btn btn-outline-danger">Refresh</button>
-			            These operations do not currently work and require more development.
-			        </div>
 				</div>
 			</div>
 
@@ -249,11 +256,14 @@
 			          </tbody>
 			        </table>	
 					</div>
-					<div class="casenote-context casenote-not-found alert alert-warning" style="display: none">
-					<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> No case note details found.
+					<div class="casenote-context casenote-not-found alert alert-info" style="display: none">
+					  <i class="fa fa-info-circle" aria-hidden="true"></i> No case note details found.
+					</div>
+					<div class="casenote-context casenote-secured alert alert-warning" style="display: none">
+					  <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> These case note details are secured.
 					</div>
 					<div class="casenote-context casenote-error alert alert-danger" style="display: none">
-					<i class="fa fa-exclamation-circle" aria-hidden="true"></i> There was a problem getting the case note.
+					  <i class="fa fa-exclamation-circle" aria-hidden="true"></i> There was a problem getting the case note.
 					</div>
 				</div>
 		  	</div>
@@ -273,7 +283,7 @@
 				<div class="card-block">
 					<div class="table-wrapper-scroll-y ">
 					<p>
-					These are the permissions assigned to the authorities included in the access token, and are fetched from the <span class="alert-warning"><strong>/oauth/aggregatedPermission</strong></span> REST endpoint invoked using the OAuth access token.
+					These are the permissions assigned to the authorities included in the access token, and are fetched from the <span class="alert-warning"><strong>/oauth/aggregatedPermission</strong></span> REST endpoint invoked using the OAuth2 access token.
 					</p>
 					 <div class="alert alert-danger permissions-error" style="display: none">
 					 <i class="fa fa-exclamation-circle" aria-hidden="true"></i> There was a problem with retrieving permissions.
@@ -341,6 +351,7 @@
               $("#personName").html("");
               $("#personId").html("");
               $("#tokenExpiry").html("");
+              $("#refreshTokenExpiry").html("");
               $("#tokenScopes").html("");
               $("#tokenId").html("");
           }
@@ -370,6 +381,8 @@
               	  $("#personId").html(data.subject_id);
               	  var expiryDate = new Date(data.expiration);
               	  $("#tokenExpiry").html( expiryDate.toLocaleDateString() + " " + expiryDate.toLocaleTimeString());
+              	  var refreshExpiryDate = new Date(data.refreshTokenExpiry);
+              	  $("#refreshTokenExpiry").html( refreshExpiryDate.toLocaleDateString() + " " + refreshExpiryDate.toLocaleTimeString());
               	  $("#tokenScopes").html(data.scopes.join(', '));
               	  $("#tokenId").html(data.jti);
               	  $("#tokenId").data("bearer", data.token);
@@ -440,7 +453,6 @@
 	      getPermissions();
 	      
 	      var getPersons = function() {
-	    	 
 	    	  	  var searchTerm = $("#personSearch").val();
 	    	  	  if (searchTerm && searchTerm.length > 1) {
 	              $(".person-search-error").hide();
@@ -475,27 +487,30 @@
 
 	      
 	      var getPersonCaseNote = function(id, name) {
-	    	    console.log('Getting case note for ' + name + ' and id ' + id);
           	$(".casenote-context").hide();
             	$(".casenote-selected").show();
             	$("#caseNoteName").html(name);
             	$.get("/caseNoteEntry/"+id, function(data) {
             	  if (data) {
-                if (data.eventDate) {
-                  var eventDate = new Date(data.eventDate);
-                  $("#event-date").html(eventDate.toLocaleDateString());
-                } else {
-                  $("#event-date").html("");
-                }
-                $("#event-type").html(data.entryType);
-                $("#event-subtype").html(data.entrySubtype);
-                $("#event-practitioner").html(data.practitioner);
-                $("#event-details").html(data.eventDetails);
-            	    $(".casenote-found").show();
+            		if (data.secured) {
+                        $(".casenote-secured").show();
+            		} else {
+	                if (data.eventDate) {
+	                  var eventDate = new Date(data.eventDate);
+	                  $("#event-date").html(eventDate.toLocaleDateString());
+	                } else {
+	                  $("#event-date").html("");
+	                }
+	                $("#event-type").html(data.entryType);
+	                $("#event-subtype").html(data.entrySubtype);
+	                $("#event-practitioner").html(data.practitioner);
+	                $("#event-details").html(data.eventDetails);
+	            	    $(".casenote-found").show();
+            		}
             	  } else {
                 $(".casenote-not-found").show();
             	  }
-            	}).fail(function(){
+            	}).fail(function(xhr, statusText, error){
               $(".casenote-error").show();
             	})
 	      }

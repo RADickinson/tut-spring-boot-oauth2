@@ -6,34 +6,34 @@ server:
           name: APP2SESSION
         
 # Alpha (custom) server configuration
-#security:
-#  oauth2:
-#    client:
-#      clientId: ssoClient2Id
-#      clientSecret: secret
-#      accessTokenUri: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse/oauth/token
-#      userAuthorizationUri: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse/oauth/authorize
-#    resource:
-#      userInfoUri: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse/rest/oauth/me
-#
-#resource:
-#  eclipse:
-#    url: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse
-    
-# Local Eclipse server configuration - Comment out the above and uncomment below to use a local copy of Eclipse
 security:
   oauth2:
     client:
       clientId: ssoClient2Id
       clientSecret: secret
-      accessTokenUri: http://localhost:8080/eclipse/oauth/token
-      userAuthorizationUri: http://localhost:8080/eclipse/oauth/authorize
+      accessTokenUri: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse/oauth/token
+      userAuthorizationUri: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse/oauth/authorize
     resource:
-      userInfoUri: http://localhost:8080/eclipse/rest/oauth/me
+      userInfoUri: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse/rest/oauth/me
 
 resource:
   eclipse:
-    url: http://localhost:8080/eclipse
+    url: https://olm-custombuild-ecl.olmeservices.co.uk/eclipse
+    
+# Local Eclipse server configuration - Comment out the above and uncomment below to use a local copy of Eclipse
+#security:
+#  oauth2:
+#    client:
+#      clientId: ssoClient2Id
+#      clientSecret: secret
+#      accessTokenUri: http://localhost:8080/eclipse/oauth/token
+#      userAuthorizationUri: http://localhost:8080/eclipse/oauth/authorize
+#    resource:
+#      userInfoUri: http://localhost:8080/eclipse/rest/oauth/me
+#
+#resource:
+#  eclipse:
+#    url: http://localhost:8080/eclipse
 
 logging:
   level:

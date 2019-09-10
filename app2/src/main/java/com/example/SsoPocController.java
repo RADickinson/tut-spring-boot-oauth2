@@ -18,12 +18,14 @@ package com.example;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +63,7 @@ class SsoPocController{
   OAuth2RestOperations oauthRestOps;
   
 	@RequestMapping("/user")
-	public Map<String,Object> user(Principal principal) {
+	public Map<String,Object> user(Principal principal) throws Exception {
     logger.info("Principal in SSO APP: {}", principal);
 
     // Refresh access token if required.
@@ -93,7 +95,19 @@ class SsoPocController{
    
    Jwt jwt =JwtHelper.decode(clientContext.getAccessToken().getValue());
    logger.info("Access token as Jwt: {}",jwt);
+
+   Jwt refreshJwt = JwtHelper.decode(refreshTokenValue);
+   logger.info("Refresh token as Jwt: {}",refreshJwt);
    
+   String refreshTokenClaims = refreshJwt.getClaims();
+   JSONParser parser = new JSONParser(0);
+   JSONObject refreshTokenClaimsJson = (JSONObject)parser.parse(refreshTokenClaims);
+   Object refreshTokenExpiryObj = refreshTokenClaimsJson.get("exp");
+   long refreshTokenExpMs = Long.valueOf(refreshTokenExpiryObj.toString()) * 1000;
+   Date refreshTokenExpiry = new Date(refreshTokenExpMs);
+   logger.info("Refresh token expiry: {}", refreshTokenExpiry);
+   
+   userInfo.put("refreshTokenExpiry", refreshTokenExpiry);
    return userInfo; 
 	}
 

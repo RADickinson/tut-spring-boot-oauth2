@@ -72,7 +72,7 @@
 				
 				<div class="card-block">
 					<p>
-					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint invoked using the OAuth access token.
+					The details below are retrieved from the <span class="alert-warning"><strong>/oauth/me</strong></span> REST endpoint invoked using the OAuth2 access token.
 					</p>
 			        <table class="table">
 			          <tbody>
@@ -134,7 +134,7 @@
 				</div>
 				<div class="card-block">
 					<p>
-					The details below are included in the OAuth access token itself.
+					The details below are included in the OAuth2 access token itself.
 					</p>
 			        <table class="table">
 			          <tbody>
@@ -166,13 +166,20 @@
 			              <td>Token Id</td>
 			              <td class="bg-primary" colspan="2"><span id="tokenId"></span></td>
 			            </tr>
+			            <tr>
+			              <td>Refresh token expiry</td>
+			              <td class="bg-primary" colspan="2"><span id="refreshTokenExpiry"></span></td>
+			            </tr>
+			            <tr>
+			              <td><button onClick="refresh()" class="btn btn-outline-primary">Refresh</button></td>
+			              <td colspan="2"><span>Access tokens are only refreshed when they have expired. Using the Person search API will automatically refresh an expired token.</span></td>
+			            </tr>
+			            <tr>
+			              <td class="alert-warning"><button onClick="revokeToken()" class="btn btn-outline-danger">Revoke token</button></td>
+			              <td class="alert-warning" colspan="2"><span>This operation does not currently work and requires more development.</span></td>
+			            </tr>
 			          </tbody>
 			        </table>
-			        <div class="alert alert-warning">
-			            <button onClick="revokeToken()" class="btn btn-outline-secondary">Revoke token</button>
-			            <button onClick="refresh()" class="btn btn-outline-danger">Refresh</button>
-			            These operations do not currently work and require more development.
-			        </div>
 				</div>
 			</div>
 
@@ -246,6 +253,7 @@
               $("#personName").html("");
               $("#personId").html("");
               $("#tokenExpiry").html("");
+              $("#refreshTokenExpiry").html("");
               $("#tokenScopes").html("");
               $("#tokenId").html("");
           }
@@ -274,6 +282,8 @@
           	  $("#personId").html(data.subject_id);
               var expiryDate = new Date(data.expiration);
               $("#tokenExpiry").html( expiryDate.toLocaleDateString() + " " + expiryDate.toLocaleTimeString());
+          	  var refreshExpiryDate = new Date(data.refreshTokenExpiry);
+          	  $("#refreshTokenExpiry").html( refreshExpiryDate.toLocaleDateString() + " " + refreshExpiryDate.toLocaleTimeString());
               $("#tokenScopes").html(data.scopes.join(', '));
               $("#tokenId").html(data.jti);
               $("#tokenId").data("bearer", data.token);
